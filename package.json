@@ -1,0 +1,24 @@
+{
+  "name": "temp-hardhat-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^2.1.0",
+    "dotenv": "^17.2.0",
+    "hardhat": "^2.26.0",
+    "hardhat-contract-sizer": "^2.10.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.9.0",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.7"
+  }
+}

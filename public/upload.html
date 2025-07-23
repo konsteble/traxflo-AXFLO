@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Загрузка трека | TraxFlow</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+
+    * {
+
+      box-sizing: border-box;
+
+      margin: 0;
+
+      padding: 0;
+
+    }
+
+    
+
+    body {
+
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+      line-height: 1.6;
+
+      color: #fff;
+
+      background-color: #121212;
+
+      min-height: 100vh;
+
+      padding: 20px;
+
+    }
+
+    
+
+    .upload-container {
+
+      max-width: 500px;
+
+      margin: 0 auto;
+
+      background: #1e1e1e;
+
+      padding: 1.5rem;
+
+      border-radius: 8px;
+
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+
+    }
+
+    
+
+    h1 {
+
+      font-family: 'Share Tech Mono', monospace;
+
+      color: #00BFFF;
+
+      margin-bottom: 1.2rem;
+
+      text-align: center;
+
+      font-size: 1.5rem;
+
+    }
+
+    
+
+    .upload-form {
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 1.2rem;
+
+    }
+
+    
+
+    .form-group {
+
+      margin-bottom: 0.8rem;
+
+    }
+
+    
+
+    label {
+
+      display: block;
+
+      margin-bottom: 0.4rem;
+
+      color: #aaa;
+
+      font-size: 0.85rem;
+
+    }
+
+    
+
+    input[type="text"],
+
+    input[type="file"] {
+
+      width: 100%;
+
+      padding: 0.7rem;
+
+      background: #333;
+
+      border: 1px solid #444;
+
+      border-radius: 6px;
+
+      color: white;
+
+      font-size: 0.95rem;
+
+    }
+
+    
+
+    input:focus {
+
+      outline: none;
+
+      border-color: #00BFFF;
+
+    }
+
+    
+
+    .file-input-wrapper {
+
+      position: relative;
+
+      overflow: hidden;
+
+      display: inline-block;
+
+      width: 100%;
+
+    }
+
+    
+
+    .file-input-button {
+
+      background: #333;
+
+      color: white;
+
+      padding: 0.7rem;
+
+      border-radius: 6px;
+
+      border: 1px dashed #555;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      transition: all 0.3s;
+
+      font-size: 0.95rem;
+
+    }
+
+    
+
+    .file-input-button:hover {
+
+      border-color: #00BFFF;
+
+    }
+
+    
+
+    .file-input {
+
+      position: absolute;
+
+      left: 0;
+
+      top: 0;
+
+      opacity: 0;
+
+      width: 100%;
+
+      height: 100%;
+
+      cursor: pointer;
+
+    }
+
+    
+
+    .file-name {
+
+      margin-top: 0.4rem;
+
+      font-size: 0.85rem;
+
+      color: #aaa;
+
+    }
+
+    
+
+    .submit-button {
+
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+
+      color: white;
+
+      border: none;
+
+      padding: 0.9rem;
+
+      font-size: 0.95rem;
+
+      border-radius: 6px;
+
+      cursor: pointer;
+
+      transition: all 0.3s;
+
+      font-family: 'Share Tech Mono', monospace;
+
+      font-weight: bold;
+
+      margin-top: 0.8rem;
+
+    }
+
+    
+
+    .submit-button:hover {
+
+      background: linear-gradient(135deg, #3e8e41, #2E7D32);
+
+      transform: translateY(-2px);
+
+    }
+
+    
+
+    .submit-button:disabled {
+
+      background: #555;
+
+      cursor: not-allowed;
+
+      transform: none;
+
+    }
+
+    
+
+    .status-message {
+
+      margin-top: 1.2rem;
+
+      padding: 0.9rem;
+
+      border-radius: 6px;
+
+      text-align: center;
+
+      display: none;
+
+      font-size: 0.9rem;
+
+    }
+
+    
+
+    .status-message.error {
+
+      background: rgba(244, 67, 54, 0.2);
+
+      color: #F44336;
+
+      display: block;
+
+    }
+
+    
+
+    .status-message.success {
+
+      background: rgba(76, 175, 80, 0.2);
+
+      color: #4CAF50;
+
+      display: block;
+
+    }
+
+    
+
+    .status-message.loading {
+
+      background: rgba(33, 150, 243, 0.2);
+
+      color: #2196F3;
+
+      display: block;
+
+    }
+
+    
+
+    .back-button {
+
+      display: inline-block;
+
+      margin-top: 1.2rem;
+
+      color: #00BFFF;
+
+      text-decoration: none;
+
+      font-family: 'Share Tech Mono', monospace;
+
+      transition: all 0.3s;
+
+      font-size: 0.9rem;
+
+    }
+
+    
+
+    .back-button:hover {
+
+      text-decoration: underline;
+
+    }
+
+
+
+    @media (max-width: 600px) {
+
+      .upload-container {
+
+        padding: 1.2rem;
+
+      }
+
+      
+
+      h1 {
+
+        font-size: 1.3rem;
+
+      }
+
+      
+
+      .submit-button {
+
+        padding: 0.8rem;
+
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="upload-container">
+
+    <h1>Загрузить новый трек</h1>
+
+    
+
+    <form class="upload-form" id="upload-form">
+
+      <div class="form-group">
+
+        <label for="track-title">Название трека</label>
+
+        <input type="text" id="track-title" placeholder="Введите название трека" required>
+
+      </div>
+
+      
+
+      <div class="form-group">
+
+        <label for="artist-name">Исполнитель</label>
+
+        <input type="text" id="artist-name" placeholder="Введите имя исполнителя" required>
+
+      </div>
+
+      
+
+      <div class="form-group">
+
+        <label>Аудиофайл</label>
+
+        <div class="file-input-wrapper">
+
+          <div class="file-input-button" id="file-input-label">
+
+            Выберите аудиофайл
+
+          </div>
+
+          <input type="file" id="track-file" class="file-input" accept="audio/*" required>
+
+          <div class="file-name" id="file-name">Файл не выбран</div>
+
+        </div>
+
+      </div>
+
+      
+
+      <button type="submit" class="submit-button" id="submit-button">Загрузить трек</button>
+
+    </form>
+
+    
+
+    <div class="status-message" id="status-message"></div>
+
+    
+
+    <a href="/" class="back-button">← Вернуться на главную</a>
+
+  </div>
+
+
+
+  <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const form = document.getElementById('upload-form');
+
+      const fileInput = document.getElementById('track-file');
+
+      const fileName = document.getElementById('file-name');
+
+      const fileInputLabel = document.getElementById('file-input-label');
+
+      const submitButton = document.getElementById('submit-button');
+
+      const statusMessage = document.getElementById('status-message');
+
+      
+
+      fileInput.addEventListener('change', () => {
+
+        if (fileInput.files.length > 0) {
+
+          fileName.textContent = fileInput.files[0].name;
+
+          fileInputLabel.textContent = 'Файл выбран';
+
+        } else {
+
+          fileName.textContent = 'Файл не выбран';
+
+          fileInputLabel.textContent = 'Выберите аудиофайл';
+
+        }
+
+      });
+
+      
+
+      form.addEventListener('submit', async (e) => {
+
+        e.preventDefault();
+
+        
+
+        const title = document.getElementById('track-title').value.trim();
+
+        const artist = document.getElementById('artist-name').value.trim();
+
+        
+
+        if (!fileInput.files.length) {
+
+          showMessage('Пожалуйста, выберите аудиофайл', 'error');
+
+          return;
+
+        }
+
+        
+
+        if (!title) {
+
+          showMessage('Введите название трека', 'error');
+
+          return;
+
+        }
+
+        
+
+        const formData = new FormData();
+
+        formData.append('title', title);
+
+        formData.append('artist', artist || 'Unknown');
+
+        formData.append('track', fileInput.files[0]);
+
+        
+
+        try {
+
+          showMessage('Идет загрузка трека...', 'loading');
+
+          submitButton.disabled = true;
+
+          
+
+          const response = await fetch('http://localhost:3001/api/upload', {
+
+            method: 'POST',
+
+            body: formData
+
+          });
+
+          
+
+          if (!response.ok) {
+
+            const errorData = await response.json().catch(() => ({}));
+
+            throw new Error(errorData.error || `Ошибка сервера: ${response.status}`);
+
+          }
+
+          
+
+          const result = await response.json();
+
+          showMessage('Трек успешно загружен! Перенаправление...', 'success');
+
+          
+
+          setTimeout(() => {
+
+            window.location.href = '/';
+
+          }, 2000);
+
+          
+
+        } catch (error) {
+
+          console.error('Upload error:', error);
+
+          let errorMessage = error.message;
+
+          
+
+          if (error.message.includes('Failed to fetch')) {
+
+            errorMessage = 'Не удалось подключиться к серверу. Проверьте подключение.';
+
+          } else if (error.message.includes('NetworkError')) {
+
+            errorMessage = 'Ошибка сети. Проверьте подключение к интернету.';
+
+          }
+
+          
+
+          showMessage(`Ошибка загрузки: ${errorMessage}`, 'error');
+
+        } finally {
+
+          submitButton.disabled = false;
+
+        }
+
+      });
+
+      
+
+      function showMessage(text, type) {
+
+        statusMessage.textContent = text;
+
+        statusMessage.className = `status-message ${type}`;
+
+      }
+
+    });
+
+  </script>
+
+</body>
+
+</html>

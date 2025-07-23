@@ -1,0 +1,11 @@
+# Перейдите в папку с проектом
+cd C:\Users\Надя\documents22\traxflow-mvp
+
+# Откройте базу данных
+sqlite3 tracks.db
+
+# В интерфейсе SQLite выполните:
+SELECT * FROM tracks;
+
+# Для выхода:
+.quit
