@@ -6,10 +6,47 @@ const fs = require('fs');
 const cors = require('cors');
 const multer = require('multer');
 const crypto = require('crypto');
+const { ethers } = require('ethers');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ==================== Блокчейн-конфигурация ====================
+const CONTRACT_CONFIG = {
+  sepolia: {
+    tokenAddress: process.env.TOKEN_ADDRESS || "0xB34D269F3303E1BF372fBe5B0c391376D8cd945c",
+    saleAddress: process.env.SALE_ADDRESS || "0xeF538Ed8D64993688a56247591C8f0c0DC4e50AE",
+    providerUrl: process.env.SEPOLIA_RPC || "https://rpc.sepolia.org"
+  }
+};
+
+let tokenContract, saleContract;
+const provider = new ethers.JsonRpcProvider(CONTRACT_CONFIG.sepolia.providerUrl);
+
+async function initBlockchain() {
+  try {
+    const tokenAbi = require('./public/contracts/AXFLOToken.json');
+const saleAbi = require('./public/contracts/TokenSale.json');
+
+    tokenContract = new ethers.Contract(
+      CONTRACT_CONFIG.sepolia.tokenAddress,
+      tokenAbi.abi,
+      provider
+    );
+
+    saleContract = new ethers.Contract(
+      CONTRACT_CONFIG.sepolia.saleAddress,
+      saleAbi.abi,
+      provider
+    );
+
+    console.log('✅ Блокчейн контракты инициализированы');
+  } catch (error) {
+    console.error('❌ Ошибка инициализации блокчейн контрактов:', error);
+  }
+}
+
+// ==================== База данных и файловое хранилище ====================
 const DB_PATH = path.resolve(__dirname, 'database', 'tracks.db');
 const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE | sqlite3.OPEN_FULLMUTEX, (err) => {
   if (err) {
@@ -21,6 +58,7 @@ const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_C
 
 db.configure("busyTimeout", 5000);
 
+// Инициализация таблиц
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS tracks (
@@ -40,6 +78,7 @@ db.serialize(() => {
   });
 });
 
+// ==================== Настройка Express ====================
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'DELETE'],
@@ -49,10 +88,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Создание необходимых директорий
 function setupDirectories() {
   const requiredDirs = [
     path.join(__dirname, 'database'),
-    path.join(__dirname, 'public', 'tracks')
+    path.join(__dirname, 'public', 'tracks'),
+    path.join(__dirname, 'contracts', 'deployments')
   ];
 
   requiredDirs.forEach(dir => {
@@ -63,6 +104,7 @@ function setupDirectories() {
   });
 }
 
+// Настройка загрузки файлов
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, 'public', 'tracks');
@@ -91,6 +133,9 @@ const upload = multer({
   }
 });
 
+// ==================== API Endpoints ====================
+
+// Здоровье сервера
 app.get('/api/health', (req, res) => {
   db.get("SELECT COUNT(*) as count FROM tracks", (err, row) => {
     if (err) {
@@ -103,6 +148,45 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Получение информации о контрактах
+app.get('/api/contracts', async (req, res) => {
+  try {
+    const [tokenOwner, tokenName, tokenSymbol, tokenSupply] = await Promise.all([
+      tokenContract.owner(),
+      tokenContract.name(),
+      tokenContract.symbol(),
+      tokenContract.totalSupply()
+    ]);
+
+    const [saleOwner, tokenPrice, totalSold] = await Promise.all([
+      saleContract.owner(),
+      saleContract.price(),
+      saleContract.totalSold()
+    ]);
+
+    res.json({
+      token: {
+        address: CONTRACT_CONFIG.sepolia.tokenAddress,
+        owner: tokenOwner,
+        name: tokenName,
+        symbol: tokenSymbol,
+        totalSupply: tokenSupply.toString()
+      },
+      sale: {
+        address: CONTRACT_CONFIG.sepolia.saleAddress,
+        owner: saleOwner,
+        price: ethers.utils.formatEther(tokenPrice),
+        totalSold: totalSold.toString(),
+        balance: ethers.utils.formatEther(await provider.getBalance(CONTRACT_CONFIG.sepolia.saleAddress))
+      }
+    });
+  } catch (error) {
+    console.error('Blockchain API Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Работа с треками (существующий функционал)
 app.get('/api/tracks', (req, res) => {
   db.all(`
     SELECT *, 
@@ -217,19 +301,30 @@ app.delete('/api/tracks/:id', (req, res) => {
   });
 });
 
-setupDirectories();
+// ==================== Запуск сервера ====================
+async function startServer() {
+  setupDirectories();
+  await initBlockchain();
 
-app.listen(PORT, () => {
-  console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
-  console.log(`📁 Путь к базе данных: ${DB_PATH}`);
-  
-  db.get("SELECT COUNT(*) as count FROM tracks", (err, row) => {
-    if (err) {
-      console.error('❌ Ошибка проверки базы данных:', err.message);
-    } else {
-      console.log(`✅ База данных готова, треков: ${row.count}`);
-    }
+  app.listen(PORT, () => {
+    console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
+    console.log(`📁 Путь к базе данных: ${DB_PATH}`);
+    console.log(`🔗 Токен контракт: ${CONTRACT_CONFIG.sepolia.tokenAddress}`);
+    console.log(`🔗 Контракт продажи: ${CONTRACT_CONFIG.sepolia.saleAddress}`);
+    
+    db.get("SELECT COUNT(*) as count FROM tracks", (err, row) => {
+      if (err) {
+        console.error('❌ Ошибка проверки базы данных:', err.message);
+      } else {
+        console.log(`✅ База данных готова, треков: ${row.count}`);
+      }
+    });
   });
+}
+
+startServer().catch(err => {
+  console.error('❌ Ошибка запуска сервера:', err);
+  process.exit(1);
 });
 
 process.on('SIGINT', () => {

@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TraxFlow Token Sale</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -40,12 +39,6 @@
       text-transform: uppercase;
     }
     
-    .logo span {
-      display: inline-block;
-      width: 1.2rem;
-      text-align: center;
-    }
-    
     .container {
       max-width: 900px;
       margin: 2rem auto;
@@ -58,25 +51,6 @@
       padding: 2rem;
       box-shadow: 0 8px 16px rgba(0,0,0,0.3);
       margin-bottom: 2rem;
-    }
-    
-    .network-tabs {
-      display: flex;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid #333;
-    }
-    
-    .network-tab {
-      padding: 0.8rem 1.5rem;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s;
-      font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .network-tab.active {
-      border-bottom: 3px solid #8A2BE2;
-      color: #8A2BE2;
     }
     
     .token-info-card {
@@ -110,6 +84,32 @@
       background: linear-gradient(90deg, #8A2BE2, #4B0082);
       width: 0%;
       transition: width 1s ease;
+    }
+    
+    .progress-details {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .user-balance-card {
+      background: #2d2d2d;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .balance-info {
+      font-size: 1.1rem;
+    }
+    
+    .balance-amount {
+      font-weight: bold;
+      color: #8A2BE2;
     }
     
     .buy-form {
@@ -154,7 +154,6 @@
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.3s;
-      font-family: 'Share Tech Mono', monospace;
       font-weight: bold;
     }
     
@@ -178,19 +177,15 @@
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.3s;
-      font-family: 'Share Tech Mono', monospace;
       font-weight: bold;
-      grid-column: span 2;
     }
     
     .wallet-button:hover {
       background: #e2761b;
-      transform: translateY(-2px);
     }
     
     .wallet-button.connected {
       background: #4CAF50;
-      position: relative;
       padding-right: 2.5rem;
     }
     
@@ -203,67 +198,10 @@
       border: none;
       color: white;
       cursor: pointer;
-    }
-    
-    .tokens-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-    }
-    
-    .tokens-table th, .tokens-table td {
-      padding: 1rem;
-      text-align: left;
-      border-bottom: 1px solid #333;
-    }
-    
-    .tokens-table th {
-      color: #8A2BE2;
-      font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-    
-    .status-success {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4CAF50;
-    }
-    
-    .status-pending {
-      background: rgba(255, 193, 7, 0.2);
-      color: #FFC107;
-    }
-    
-    .status-failed {
-      background: rgba(244, 67, 54, 0.2);
-      color: #F44336;
-    }
-    
-    .section-title {
-      font-family: 'Share Tech Mono', monospace;
-      color: #8A2BE2;
-      margin: 2rem 0 1rem;
-      font-size: 1.3rem;
-    }
-    
-    .info-text {
-      color: #aaa;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 1rem;
-    }
-    
-    .network-info {
       display: none;
     }
     
-    .network-info.active {
+    .wallet-button.connected .disconnect-btn {
       display: block;
     }
     
@@ -293,21 +231,19 @@
       display: block;
     }
     
+    .network-alert {
+      background: rgba(255, 193, 7, 0.2);
+      color: #FFC107;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
+    }
+    
     @media (max-width: 768px) {
       .buy-form {
         grid-template-columns: 1fr;
-      }
-      
-      .action-button, .wallet-button {
-        grid-column: span 1;
-      }
-      
-      .container {
-        padding: 0 1rem;
-      }
-      
-      .token-sale-container {
-        padding: 1.5rem;
       }
     }
   </style>
@@ -324,319 +260,276 @@
   </header>
 
   <div class="container">
+    <div id="network-alert" class="network-alert">
+      Пожалуйста, переключитесь на сеть Sepolia (ChainID: 11155111)
+    </div>
+
     <div class="token-sale-container">
       <h1>AXFLO Token Sale</h1>
       <p class="info-text">Приобретите токены AXFLO для доступа к эксклюзивным функциям платформы</p>
       
-      <div class="network-tabs">
-        <div class="network-tab active" data-network="sepolia">Sepolia</div>
-        <div class="network-tab" data-network="solana">Solana</div>
+      <div class="token-info-card">
+    <h3>Информация о токене</h3>
+    <p><strong>Тикер:</strong> AXFLO</p>
+    <p><strong>Цена:</strong> <span id="current-price">0.00002</span> ETH</p>
+    <p><strong>Токенов за 1 ETH:</strong> <span id="tokens-per-eth">50000</span></p>
+    <p><strong>Общее предложение:</strong> 15,000,000 AXFLO</p>
+    <p><strong>Цель продажи:</strong> 5,000,000 AXFLO</p>
+  </div>
+      
+      <div class="progress-container">
+        <div class="progress-info">
+          <span>Продажа токенов</span>
+          <span id="progress-percent">0.10%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="sale-progress" style="width: 0.10%"></div>
+        </div>
+        <div class="progress-details">
+          <span>Продано: <span id="sold-tokens">5,100</span> AXFLO</span>
+          <span>Доступно: <span id="available-tokens">4,994,900</span> AXFLO</span>
+        </div>
       </div>
       
-      <div id="sepolia-info" class="network-info active">
-        <div class="token-info-card">
-          <h3>Информация о токене (Sepolia)</h3>
-          <p><strong>Тикер:</strong> AXFLO</p>
-          <p><strong>Цена:</strong> <span id="current-price">0.002</span> ETH</p>
-          <p><strong>Общее предложение:</strong> 15,000,000 AXFLO</p>
-          <p><strong>Цель продажи:</strong> 5,000,000 AXFLO</p>
-        </div>
-        
-        <div class="progress-container">
-          <div class="progress-info">
-            <span>Продано: <span id="sold-tokens">0</span> AXFLO</span>
-            <span>Доступно: <span id="available-tokens">5,000,000</span> AXFLO</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="sale-progress"></div>
-          </div>
-        </div>
-        
-        <div class="buy-form">
-          <div class="form-group">
-            <label for="buy-amount">Количество AXFLO</label>
-            <input type="number" id="buy-amount" min="100" step="100" value="1000">
-          </div>
-          <div class="form-group">
-            <label for="eth-amount">Сумма в ETH</label>
-            <input type="number" id="eth-amount" readonly>
-          </div>
-          <button id="buy-button" class="action-button" disabled>Купить AXFLO</button>
-          <button id="check-balance" class="action-button">Проверить баланс</button>
-        </div>
-        
-        <div class="status-message" id="sepolia-status"></div>
+      <div class="user-balance-card" id="user-balance-card" style="display: none;">
+        <div class="balance-info">Ваш баланс AXFLO:</div>
+        <div class="balance-amount" id="user-balance">0</div>
       </div>
       
-      <div id="solana-info" class="network-info">
-        <div class="token-info-card">
-          <h3>Информация о токене (Solana)</h3>
-          <p><strong>Тикер:</strong> AXFLO</p>
-          <p><strong>Цена:</strong> 1 AXFLO = 0.01 USDT</p>
-          <p><strong>Общее предложение:</strong> 50,000,000 AXFLO</p>
+      <div class="buy-form">
+        <div class="form-group">
+          <label for="buy-amount">Количество AXFLO</label>
+          <input type="number" id="buy-amount" min="100" step="100" value="1000">
         </div>
-        
-        <div class="buy-form">
-          <div class="form-group">
-            <label for="solana-buy-amount">Количество AXFLO</label>
-            <input type="number" id="solana-buy-amount" min="100" step="100" value="1000">
-          </div>
-          <div class="form-group">
-            <label for="solana-usdt-amount">Сумма в USDT</label>
-            <input type="number" id="solana-usdt-amount" readonly value="10">
-          </div>
-          <button id="solana-buy-button" class="action-button" disabled>Купить AXFLO</button>
-          <button id="solana-connect-wallet" class="wallet-button">Подключить кошелек</button>
+        <div class="form-group">
+          <label for="eth-amount">Сумма в ETH</label>
+          <input type="number" id="eth-amount" readonly>
         </div>
-        
-        <div class="status-message" id="solana-status"></div>
+        <button id="buy-button" class="action-button" disabled>Купить AXFLO</button>
+        <button id="check-balance" class="action-button">Проверить баланс</button>
       </div>
-    </div>
-    
-    <h2 class="section-title">Мои покупки</h2>
-    <table class="tokens-table">
-      <thead>
-        <tr>
-          <th>Сеть</th>
-          <th>Количество</th>
-          <th>Сумма</th>
-          <th>Дата</th>
-          <th>Статус</th>
-        </tr>
-      </thead>
-      <tbody id="transactions-list">
-        <tr>
-          <td colspan="5" style="text-align: center;">Пока нет транзакций</td>
-        </tr>
-      </tbody>
-    </table>
-    
-    <h2 class="section-title">Как купить AXFLO</h2>
-    <div class="token-info-card">
-      <h3>Инструкция для Sepolia</h3>
-      <ol class="info-text">
-        <li>Установите MetaMask и добавьте сеть Sepolia</li>
-        <li>Пополните кошелёк ETH с <a href="https://sepoliafaucet.com" target="_blank">крана</a></li>
-        <li>Подключите кошелёк и укажите количество AXFLO</li>
-        <li>Нажмите "Купить AXFLO" и подтвердите транзакцию</li>
-      </ol>
+      
+      <div class="status-message" id="status-message"></div>
     </div>
   </div>
 
   <script>
-    // Конфигурация контрактов
-    const CONTRACT_CONFIG = {
+    const CONFIG = {
       sepolia: {
-        tokenAddress: "0x7a081AC6Da625098F716047F8CCc2DBD7156c95d",
-        saleAddress: "0xdBdEaeEFCEf60E329FA0c81F18BF758330b6A850",
-        tokenAbiPath: "/contracts/deployments/AXFLOToken.json",
-        saleAbiPath: "/contracts/deployments/TokenSale.json"
+        tokenAddress: "0xB34D269F3303E1BF372fBe5B0c391376D8cd945c",
+        saleAddress: "0xeF538Ed8D64993688a56247591C8f0c0DC4e50AE",
+        chainId: "0xaa36a7", // Sepolia
+        tokenDecimals: 18,
+        saleGoal: 5_000_000 * 10**18 // Цель в wei
       }
     };
 
-    // Глобальные переменные
-    let tokenContract;
-    let saleContract;
     let currentAccount = null;
-    const tokenPrice = 0.002; // Цена 1 токена в ETH
+    let tokenContract, saleContract;
+    let isConnecting = false;
+    let balanceUpdateInterval;
 
-    // Инициализация при загрузке страницы
     document.addEventListener('DOMContentLoaded', async () => {
-      initTabs();
+      initEventListeners();
       initBuyForm();
-      initWalletConnection();
+      await checkWalletOnLoad();
       
-      // Проверяем подключение кошелька при загрузке
-      if (window.ethereum && window.ethereum.selectedAddress) {
-        currentAccount = window.ethereum.selectedAddress;
-        updateWalletUI(currentAccount);
-        await initContracts();
+      if (window.ethereum) {
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
       }
+      
+      // Запускаем периодическое обновление баланса
+      balanceUpdateInterval = setInterval(updateUserBalance, 30000);
     });
 
-    // Инициализация вкладок
-    function initTabs() {
-      const networkTabs = document.querySelectorAll('.network-tab');
-      networkTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          networkTabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          
-          const network = tab.dataset.network;
-          document.querySelectorAll('.network-info').forEach(info => {
-            info.classList.remove('active');
-          });
-          document.getElementById(`${network}-info`).classList.add('active');
-        });
-      });
+    function initEventListeners() {
+      document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+      document.querySelector('.disconnect-btn').addEventListener('click', disconnectWallet);
+      document.getElementById('buy-button').addEventListener('click', buyTokens);
+      document.getElementById('check-balance').addEventListener('click', checkTokenBalance);
     }
 
-    // Инициализация формы покупки
     function initBuyForm() {
       const buyAmountInput = document.getElementById('buy-amount');
       const ethAmountInput = document.getElementById('eth-amount');
       
-      buyAmountInput.addEventListener('input', () => {
+      buyAmountInput.addEventListener('input', async () => {
         const amount = parseFloat(buyAmountInput.value) || 0;
-        ethAmountInput.value = (amount * tokenPrice).toFixed(6);
-      });
-      
-      // Установка начального значения
-      ethAmountInput.value = (1000 * tokenPrice).toFixed(6);
-    }
-
-    // Подключение кошелька MetaMask
-    function initWalletConnection() {
-      const connectBtn = document.getElementById('connect-wallet');
-      const disconnectBtn = connectBtn.querySelector('.disconnect-btn');
-      
-      connectBtn.addEventListener('click', async () => {
-        if (connectBtn.classList.contains('connected')) return;
+        if (!saleContract) return;
         
-        if (window.ethereum) {
-          try {
-            showStatus('pending', 'Подключение к MetaMask...');
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            
-            if (accounts.length > 0) {
-              currentAccount = accounts[0];
-              updateWalletUI(currentAccount);
-              await initContracts();
-              showStatus('success', 'Кошелек успешно подключен');
-            }
-          } catch (error) {
-            showStatus('error', `Ошибка подключения: ${error.message}`);
-          }
-        } else {
-          showStatus('error', 'Пожалуйста, установите MetaMask!');
+        try {
+          const [priceWei] = await saleContract.getSaleInfo();
+          const priceInEth = parseFloat(ethers.formatUnits(priceWei, 18));
+          ethAmountInput.value = (amount * priceInEth).toFixed(8);
+        } catch (error) {
+          console.error("Ошибка расчета цены:", error);
         }
       });
-      
-      disconnectBtn.addEventListener('click', () => {
-        currentAccount = null;
-        connectBtn.classList.remove('connected');
-        connectBtn.innerHTML = 'Подключить MetaMask <span class="disconnect-btn" title="Отключить"><i class="fas fa-times"></i></span>';
-        disableButtons();
-      });
-      
-      // Обработчик изменения аккаунтов
-      if (window.ethereum) {
-        window.ethereum.on('accountsChanged', (accounts) => {
-          if (accounts.length === 0) {
-            currentAccount = null;
-            connectBtn.classList.remove('connected');
-            connectBtn.innerHTML = 'Подключить MetaMask <span class="disconnect-btn" title="Отключить"><i class="fas fa-times"></i></span>';
-            disableButtons();
-            showStatus('error', 'Кошелек отключен');
-          } else {
-            currentAccount = accounts[0];
-            updateWalletUI(accounts[0]);
-            enableButtons();
-            showStatus('success', 'Аккаунт изменен');
-          }
-        });
-      }
     }
 
-    // Инициализация контрактов
-    async function initContracts() {
+    async function buyTokens() {
       try {
-        showStatus('pending', 'Загрузка контрактов...');
-        const network = 'sepolia';
-        const config = CONTRACT_CONFIG[network];
+        if (!(await checkNetwork())) return;
         
-        // Загружаем ABI
-        const [tokenResponse, saleResponse] = await Promise.all([
-          fetch(config.tokenAbiPath),
-          fetch(config.saleAbiPath)
-        ]);
-
-        if (!tokenResponse.ok || !saleResponse.ok) {
-          throw new Error('Не удалось загрузить ABI контрактов');
+        const tokenAmount = parseFloat(document.getElementById('buy-amount').value);
+        if (!tokenAmount || tokenAmount <= 0) {
+          showStatus('error', 'Укажите количество токенов');
+          return;
         }
 
-        const [tokenAbi, saleAbi] = await Promise.all([
-          tokenResponse.json(),
-          saleResponse.json()
-        ]);
-        
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        
-        tokenContract = new ethers.Contract(
-          config.tokenAddress,
-          tokenAbi.abi,
-          signer
-        );
-        
-        saleContract = new ethers.Contract(
-          config.saleAddress,
-          saleAbi.abi,
-          signer
-        );
-        
-        console.log("Контракты инициализированы:", { tokenContract, saleContract });
-        enableButtons();
+        showStatus('pending', 'Получение информации о продаже...');
+        const [priceWei, , availableTokens] = await saleContract.getSaleInfo();
+        const priceInEth = parseFloat(ethers.formatUnits(priceWei, 18));
+        const ethAmount = tokenAmount * priceInEth;
+        const tokenAmountWei = ethers.parseUnits(tokenAmount.toString(), 18);
+
+        if (tokenAmountWei > availableTokens) {
+          showStatus('error', 'Недостаточно токенов для продажи');
+          return;
+        }
+
+        showStatus('pending', 'Подтвердите транзакцию в MetaMask...');
+        const tx = await saleContract.buyTokens({
+          value: ethers.parseEther(ethAmount.toString()),
+          gasLimit: 300000
+        });
+
+        showStatus('pending', 'Обработка транзакции...');
+        await tx.wait();
+        showStatus('success', 'Токены успешно куплены!');
         await updateSaleInfo();
-        showStatus('success', 'Контракты успешно загружены');
-        
+        await updateUserBalance();
       } catch (error) {
-        console.error("Ошибка инициализации контрактов:", error);
-        showStatus('error', 'Ошибка загрузки контрактов. Проверьте консоль для деталей.');
+        console.error("Ошибка покупки токенов:", error);
+        showStatus('error', error.reason || error.message || 'Ошибка покупки токенов');
       }
     }
 
-    // Обновление информации о продаже
     async function updateSaleInfo() {
       try {
         if (!saleContract) return;
         
-        const soldTokens = await saleContract.totalSold();
-        const availableTokens = 5000000 - soldTokens.toNumber();
-        
-        document.getElementById('sold-tokens').textContent = soldTokens.toString();
-        document.getElementById('available-tokens').textContent = availableTokens.toString();
-        
-        const progressPercent = (soldTokens / 5000000) * 100;
+        const [priceWei, totalSold, availableTokens] = await saleContract.getSaleInfo();
+        const priceInEth = parseFloat(ethers.formatUnits(priceWei, 18));
+        const soldFormatted = parseFloat(ethers.formatUnits(totalSold, 18));
+        const availableFormatted = parseFloat(ethers.formatUnits(availableTokens, 18));
+        const progressPercent = (soldFormatted / 5_000_000) * 100;
+
+        document.getElementById('current-price').textContent = priceInEth;
+        document.getElementById('tokens-per-eth').textContent = (1 / priceInEth).toFixed(0);
+        document.getElementById('sold-tokens').textContent = soldFormatted.toLocaleString();
+        document.getElementById('available-tokens').textContent = availableFormatted.toLocaleString();
+        document.getElementById('progress-percent').textContent = `${progressPercent.toFixed(2)}%`;
         document.getElementById('sale-progress').style.width = `${progressPercent}%`;
-        
       } catch (error) {
         console.error("Ошибка обновления информации:", error);
-        showStatus('error', 'Ошибка получения данных о продаже');
       }
     }
 
-    // Покупка токенов
-    document.getElementById('buy-button').addEventListener('click', async () => {
+    async function updateUserBalance() {
       try {
-        const amount = document.getElementById('buy-amount').value;
-        const ethAmount = document.getElementById('eth-amount').value;
-        
-        if (!amount || amount <= 0) {
-          showStatus('error', 'Укажите количество токенов');
+        if (!tokenContract || !currentAccount) {
+          document.getElementById('user-balance-card').style.display = 'none';
           return;
         }
         
-        showStatus('pending', 'Подтвердите транзакцию в MetaMask...');
+        const balance = await tokenContract.balanceOf(currentAccount);
+        const balanceFormatted = ethers.formatUnits(balance, CONFIG.sepolia.tokenDecimals);
         
-        const tx = await saleContract.buyTokens(amount, {
-          value: ethers.utils.parseEther(ethAmount)
-        });
-        
-        showStatus('pending', 'Обработка транзакции...');
-        await tx.wait();
-        
-        showStatus('success', 'Токены успешно куплены!');
-        await updateSaleInfo();
-        
+        document.getElementById('user-balance').textContent = parseFloat(balanceFormatted).toLocaleString();
+        document.getElementById('user-balance-card').style.display = 'flex';
       } catch (error) {
-        console.error("Ошибка покупки токенов:", error);
-        showStatus('error', `Ошибка покупки: ${error.message}`);
+        console.error("Ошибка обновления баланса:", error);
+        document.getElementById('user-balance-card').style.display = 'none';
       }
-    });
+    }
 
-    // Проверка баланса токенов
-    document.getElementById('check-balance').addEventListener('click', async () => {
+    async function checkWalletOnLoad() {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            currentAccount = accounts[0];
+            updateWalletUI(currentAccount);
+            await initContracts();
+            await updateSaleInfo();
+            await updateUserBalance();
+          }
+        } catch (error) {
+          console.error("Ошибка проверки кошелька:", error);
+        }
+      }
+    }
+
+    async function connectWallet() {
+      if (isConnecting) return;
+      isConnecting = true;
+      
+      if (!window.ethereum) {
+        showStatus('error', 'Пожалуйста, установите MetaMask!');
+        isConnecting = false;
+        return;
+      }
+
+      try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (chainId !== CONFIG.sepolia.chainId) {
+          showNetworkAlert(true);
+          isConnecting = false;
+          return;
+        }
+
+        showStatus('pending', 'Подключение к MetaMask...');
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        if (accounts.length > 0) {
+          currentAccount = accounts[0];
+          updateWalletUI(currentAccount);
+          await initContracts();
+          await updateSaleInfo();
+          await updateUserBalance();
+          showStatus('success', 'Кошелек успешно подключен');
+        }
+      } catch (error) {
+        console.error("Ошибка подключения:", error);
+        showStatus('error', error.message || 'Ошибка подключения');
+      } finally {
+        isConnecting = false;
+      }
+    }
+
+    async function initContracts() {
+      try {
+        showStatus('pending', 'Инициализация контрактов...');
+        
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        // Минимальный ABI для взаимодействия
+        const tokenAbi = [
+          "function balanceOf(address) view returns (uint256)",
+          "function transfer(address, uint256) returns (bool)"
+        ];
+
+        const saleAbi = [
+          "function buyTokens() payable",
+          "function getSaleInfo() view returns (uint256, uint256, uint256, bool)",
+          "function price() view returns (uint256)"
+        ];
+
+        tokenContract = new ethers.Contract(CONFIG.sepolia.tokenAddress, tokenAbi, signer);
+        saleContract = new ethers.Contract(CONFIG.sepolia.saleAddress, saleAbi, signer);
+
+        document.getElementById('buy-button').disabled = false;
+        showStatus('success', 'Контракты инициализированы');
+      } catch (error) {
+        console.error("Ошибка инициализации контрактов:", error);
+        showStatus('error', 'Ошибка загрузки контрактов');
+      }
+    }
+
+    async function checkTokenBalance() {
       try {
         if (!tokenContract || !currentAccount) {
           showStatus('error', 'Сначала подключите кошелек');
@@ -644,46 +537,85 @@
         }
         
         showStatus('pending', 'Проверка баланса...');
-        const balance = await tokenContract.balanceOf(currentAccount);
-        const balanceFormatted = ethers.utils.formatUnits(balance, 18);
-        
-        showStatus('success', `Ваш баланс: ${balanceFormatted} AXFLO`);
+        await updateUserBalance();
+        showStatus('success', 'Баланс обновлен');
       } catch (error) {
         console.error("Ошибка проверки баланса:", error);
-        showStatus('error', `Ошибка проверки баланса: ${error.message}`);
+        showStatus('error', 'Ошибка проверки баланса');
       }
-    });
+    }
 
-    // Обновление UI кошелька
+    function disconnectWallet() {
+      currentAccount = null;
+      updateWalletUI(null);
+      document.getElementById('buy-button').disabled = true;
+      document.getElementById('user-balance-card').style.display = 'none';
+      showStatus('success', 'Кошелек отключен');
+    }
+
     function updateWalletUI(address) {
       const connectBtn = document.getElementById('connect-wallet');
-      const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
       
-      connectBtn.classList.add('connected');
-      connectBtn.innerHTML = `${shortAddress} <span class="disconnect-btn" title="Отключить"><i class="fas fa-times"></i></span>`;
+      if (address) {
+        const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        connectBtn.textContent = shortAddress;
+        connectBtn.classList.add('connected');
+      } else {
+        connectBtn.textContent = 'Подключить MetaMask';
+        connectBtn.classList.remove('connected');
+      }
     }
 
-    // Включение кнопок
-    function enableButtons() {
-      document.getElementById('buy-button').disabled = false;
+    async function checkNetwork() {
+      if (!window.ethereum) return false;
+      
+      try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (chainId !== CONFIG.sepolia.chainId) {
+          showNetworkAlert(true);
+          return false;
+        }
+        showNetworkAlert(false);
+        return true;
+      } catch (error) {
+        console.error("Ошибка проверки сети:", error);
+        return false;
+      }
     }
 
-    // Отключение кнопок
-    function disableButtons() {
-      document.getElementById('buy-button').disabled = true;
+    function showNetworkAlert(show) {
+      document.getElementById('network-alert').style.display = show ? 'block' : 'none';
     }
 
-    // Отображение статусных сообщений
+    function handleAccountsChanged(accounts) {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else {
+        currentAccount = accounts[0];
+        updateWalletUI(currentAccount);
+        updateUserBalance();
+      }
+    }
+
+    function handleChainChanged(chainId) {
+      if (chainId !== CONFIG.sepolia.chainId) {
+        showNetworkAlert(true);
+        document.getElementById('buy-button').disabled = true;
+      } else {
+        showNetworkAlert(false);
+        document.getElementById('buy-button').disabled = false;
+      }
+    }
+
     function showStatus(type, message) {
-      const statusElement = document.getElementById('sepolia-status');
-      if (!statusElement) return;
-      
+      const statusElement = document.getElementById('status-message');
       statusElement.textContent = message;
       statusElement.className = `status-message ${type}`;
       
       if (type !== 'pending') {
         setTimeout(() => {
           statusElement.className = 'status-message';
+          statusElement.textContent = '';
         }, 5000);
       }
     }
